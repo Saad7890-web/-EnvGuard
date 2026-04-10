@@ -1,2 +1,14 @@
 version: 1
-checks: []
+
+checks:
+  - name: docker
+    type: docker
+
+  - name: postgres_port_5432
+    type: port
+    port: 5432
+
+  - name: disk_root
+    type: disk
+    path: /
+    threshold_percent: 90
