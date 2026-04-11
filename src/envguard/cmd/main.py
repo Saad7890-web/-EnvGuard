@@ -10,6 +10,7 @@ from rich.table import Table
 from ..cli import build_parser
 from ..config import load_config
 from ..core import run_checks
+from ..core.engine import run_checks_and_fixes
 from ..logger import setup_logging
 from ..paths import ensure_runtime_files
 
@@ -35,6 +36,35 @@ def _print_check_results(results) -> int:
 
     console.print(table)
     return 1 if has_failures else 0
+
+
+def _print_fix_results(results) -> int:
+    table = Table(title="EnvGuard Fix Results", show_lines=False)
+    table.add_column("Check")
+    table.add_column("Check Status")
+    table.add_column("Fix Status")
+    table.add_column("Message")
+    table.add_column("Details", overflow="fold")
+
+    has_fix_failures = False
+
+    for item in results:
+        check_status = "[green]PASS[/green]" if item.check.passed else "[red]FAIL[/red]"
+        if item.fix is None:
+            fix_status = "-"
+            fix_message = "No fix needed"
+            details_text = ", ".join(f"{k}={v}" for k, v in item.check.details.items()) if item.check.details else "-"
+        else:
+            fix_status = "[green]OK[/green]" if item.fix.success else "[red]FAILED[/red]"
+            fix_message = item.fix.message
+            if not item.fix.success:
+                has_fix_failures = True
+            details_text = ", ".join(f"{k}={v}" for k, v in item.fix.details.items()) if item.fix.details else "-"
+
+        table.add_row(item.check.name, check_status, fix_status, fix_message, details_text)
+
+    console.print(table)
+    return 1 if has_fix_failures else 0
 
 
 def _print_bootstrap_info(command: str, workspace_root: str) -> int:
@@ -76,7 +106,16 @@ def main(argv: list[str] | None = None) -> int:
         results = run_checks(rules)
         return _print_check_results(results)
 
-    if args.command in {"fix", "report", "watch"}:
+    if args.command == "fix":
+        rules = config.rules
+        if not rules:
+            console.print("[yellow]No checks found in configs/rules.yaml[/yellow]")
+            return 0
+
+        combined = run_checks_and_fixes(rules, dry_run=getattr(args, "dry_run", False))
+        return _print_fix_results(combined)
+
+    if args.command in {"report", "watch"}:
         return _print_bootstrap_info(args.command, str(paths.root))
 
     parser.print_help()

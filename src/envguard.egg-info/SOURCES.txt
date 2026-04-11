@@ -21,3 +21,8 @@ src/envguard/cmd/__init__.py
 src/envguard/cmd/main.py
 src/envguard/core/__init__.py
 src/envguard/core/engine.py
+src/envguard/fixes/__init__.py
+src/envguard/fixes/base.py
+src/envguard/fixes/disk.py
+src/envguard/fixes/docker.py
+src/envguard/fixes/ports.py

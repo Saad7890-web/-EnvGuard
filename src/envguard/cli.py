@@ -22,6 +22,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Increase logging verbosity.",
     )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Assume yes for fix actions.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be fixed without changing anything.",
+    )
 
     subparsers = parser.add_subparsers(dest="command", metavar="command")
 
